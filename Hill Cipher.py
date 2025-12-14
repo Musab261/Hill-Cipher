@@ -2,11 +2,13 @@ import numpy as np
 import tkinter as tk
 from tkinter import scrolledtext
 from tkinter import messagebox
+import math
 
 def generate_key():
     while True:
         key = np.random.randint(0, 26, (3, 3))
-        if int(round(np.linalg.det(key))) % 26 != 0:  # Ensure invertible
+        det = int(round(np.linalg.det(key))) % 26
+        if math.gcd(det, 26) == 1:  # determinant must be coprime with 26
             return key
 
 def mod_inv(a, m):
@@ -28,12 +30,13 @@ def encrypt(plaintext, key):
 
 def decrypt(ciphertext, key):
     det = int(round(np.linalg.det(key)))
-    det_inv = mod_inv(det % 26, 26)
+    det_mod = det % 26
+    det_inv = mod_inv(det_mod, 26)
     if det_inv is None:
         messagebox.showerror("Error", "Key is not invertible for decryption!")
         return ""
-    # Compute inverse matrix modulo 26
-    key_inv = det_inv * np.round(det * np.linalg.inv(key)).astype(int) % 26
+    adj = np.round(det * np.linalg.inv(key)).astype(int) % 26
+    key_inv = (det_inv * adj) % 26
     plaintext = ""
     for i in range(0, len(ciphertext), 3):
         block = [ord(c) - 65 for c in ciphertext[i:i+3]]
@@ -77,5 +80,6 @@ text_decrypted = scrolledtext.ScrolledText(root, width=60, height=5)
 text_decrypted.pack()
 
 key_matrix = generate_key()
+print("Generated Key Matrix (3x3):\n", key_matrix)
 
 root.mainloop()
